@@ -21,7 +21,7 @@
         <IISExpressUseClassicPipelineMode />
         <UseGlobalApplicationHostFile />
         <NuGetPackageImportStamp />
-        <UserSecretsId>fbf991f6-5c05-4bb2-81ea-465d5b8fc855</UserSecretsId>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <DebugSymbols>true</DebugSymbols>
@@ -42,6 +42,9 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="Azure.Identity, Version=1.4.1.0, Culture=neutral, PublicKeyToken=92742159e12e44c8">
+          <HintPath>..\..\..\.nuget\packages\azure.identity\1.4.1\lib\netstandard2.0\Azure.Identity.dll</HintPath>
+        </Reference>
         <Reference Include="Microsoft.CSharp" />
         <Reference Include="System" />
         <Reference Include="System.Data" />
@@ -108,6 +111,8 @@
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Antlr" Version="3.5.0.2" />
+      <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.1" />
+      <PackageReference Include="Azure.Identity" Version="1.4.1" />
       <PackageReference Include="bootstrap" Version="3.4.1" />
       <PackageReference Include="jQuery" Version="3.3.1" />
       <PackageReference Include="jQuery.Validation" Version="1.17.0" />

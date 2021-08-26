@@ -1,7 +1,12 @@
 using System;
 using System.Configuration;
-using System.Reflection;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 using ConfigurationBuilder = System.Configuration.ConfigurationBuilder;
 using ConfigurationSection = System.Configuration.ConfigurationSection;
 
@@ -23,13 +28,37 @@ namespace DemoWebApp.ConfigBuilder
 
             IConfigurationBuilder builder = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{environmentName}.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", false, true)
+                .AddJsonFile($"appsettings.{environmentName}.json", true, true)
                 .AddEnvironmentVariables();
 
             if (environmentName.StartsWith("Development", StringComparison.OrdinalIgnoreCase))
             {
                 builder.AddUserSecrets<MvcApplication>();
+            }
+            else
+            {
+                IConfigurationRoot builtConfig = builder.Build();
+                string vaultName = builtConfig["KeyVaultName"];
+                string servicePrincipalId = builtConfig["ServicePrincipalId"];
+                string servicePrincipalCertificateThumbprint = builtConfig["ServicePrincipalCertificateThumbprint"];
+                string azureAdTenantId = builtConfig["TenantId"];
+
+                using X509Store store = new X509Store(StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadOnly);
+
+                X509Certificate2Collection certs = store.Certificates.Find(
+                    X509FindType.FindByThumbprint,
+                    servicePrincipalCertificateThumbprint, false);
+
+                SecretClient secretClient = new SecretClient(
+                    new Uri($"https://{vaultName}.vault.azure.net/"),
+                    new ClientCertificateCredential(
+                        azureAdTenantId,
+                        servicePrincipalId,
+                        certs.OfType<X509Certificate2>().Single()));
+
+                builder.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
             }
 
             return builder.Build();
@@ -74,7 +103,8 @@ namespace DemoWebApp.ConfigBuilder
                 }
             }
 
-            appSettingsConfigSection.GetReloadToken().RegisterChangeCallback(AppSettingsSectionChanged, appSettingsConfigSection);
+            appSettingsConfigSection.GetReloadToken()
+                .RegisterChangeCallback(AppSettingsSectionChanged, appSettingsConfigSection);
 
             return section;
         }
