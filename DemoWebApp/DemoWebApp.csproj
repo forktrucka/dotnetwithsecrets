@@ -22,6 +22,7 @@
         <UseGlobalApplicationHostFile />
         <NuGetPackageImportStamp />
         <LangVersion>default</LangVersion>
+        <UserSecretsId>6640e858-ebc7-4786-9674-65e86be592a3</UserSecretsId>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <DebugSymbols>true</DebugSymbols>

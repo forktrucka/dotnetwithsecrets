@@ -24,13 +24,14 @@ namespace DemoWebApp.ConfigBuilder
         {
             string environmentName = Environment.GetEnvironmentVariable("ASPNET_ENVIRONMENT") ??
                                      Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ??
+                                     Environment.GetEnvironmentVariable("DEMO_ENVIRONMENT") ??
                                      DefaultEnvironmentName;
 
             IConfigurationBuilder builder = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", false, true)
                 .AddJsonFile($"appsettings.{environmentName}.json", true, true)
-                .AddEnvironmentVariables();
+                .AddEnvironmentVariables(source => source.Prefix = "DEMO_");
 
             if (environmentName.StartsWith("Development", StringComparison.OrdinalIgnoreCase))
             {
@@ -38,6 +39,9 @@ namespace DemoWebApp.ConfigBuilder
             }
             else
             {
+                // Set from either config or from env vars.
+                // When I run this code, I use env vars to set the values after installing the certificate to 'Cert:\CurrentUser\My'
+                // i.e. DEMO_ServicePrincipalId, DEMO_ServicePrincipalCertificateThumbprint, DEMO_TenantId
                 IConfigurationRoot builtConfig = builder.Build();
                 string vaultName = builtConfig["KeyVaultName"];
                 string servicePrincipalId = builtConfig["ServicePrincipalId"];
@@ -58,6 +62,8 @@ namespace DemoWebApp.ConfigBuilder
                         servicePrincipalId,
                         certs.OfType<X509Certificate2>().Single()));
 
+                // See: https://docs.microsoft.com/en-us/aspnet/core/security/key-vault-configuration?view=aspnetcore-2.2#use-managed-identities-for-azure-resources-1
+                // Secret Names are like .Net Core Json Flattening. Except they use '--'.
                 builder.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
             }
 
